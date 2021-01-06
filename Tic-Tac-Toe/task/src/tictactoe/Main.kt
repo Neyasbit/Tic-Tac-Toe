@@ -2,105 +2,98 @@ package tictactoe
 
 import java.util.*
 
-val scanner = Scanner(System.`in`)
+object Game {
+    private var cells = "         ".toCharArray()
+    private var countWin = 0
+    private var winString = ""
+    private var next = 'X'
+    private val scanner = Scanner(System.`in`)
 
-fun main() {
-
-    Field.printEmptyField()
-    print(Field.toMove())
-}
-
-object Field {
-    val arr2d = Array(3) { IntArray(3) }
-
-    fun toMove(): String {
-        print("Enter the coordinates: ")
-        var check = true
-        var playerX = true
-        while (check) {
-            try {
-
-                while (playerX) {
-
-                    val x = scanner.next()
-                    val y = scanner.next()
-
-                    if (arr2d[x.toInt() - 1][y.toInt() - 1] != 0) {
-                        println("This cell is occupied! Choose another one!")
-                        println("Enter the coordinates: ")
-
-                    } else {
-                        arr2d[x.toInt() - 1][y.toInt() - 1] = 1
-                        playerX = false
-                        showBoard()
+    fun init() {
+        printTable()
+        makeMove()
+    }
+    private fun makeMove() {
+        print("Enter the coordinates:")
+        var x = scanner.next()
+        var y = scanner.next()
+        var move = ("$x $y").split(" ")
+                .map {
+                    var coord = it.toIntOrNull()
+                    when (coord) {
+                        !is Int -> {
+                            println("You should enter numbers!")
+                            makeMove()
+                            return
+                        }
+                        !in 1..3 -> {
+                            println("Coordinates should be from 1 to 3!")
+                            makeMove()
+                            return
+                        }
+                        else -> coord - 1
                     }
+                }.toTypedArray()
+        val xCoordinate = move[1]
+        val yCoordinate = move[0]
 
-                }
-                val win = checkWin()
-                if (win != 0) return if (win == 1) "O wins" else "X wins"
-                val arr1d = arr2d.reduce { acc, ints -> acc + ints }
-                if (!arr1d.contains(0))
-                    check = false
-                if (!playerX) {
-                    val x = scanner.next()
-                    val y = scanner.next()
-                    if (arr2d[x.toInt() - 1][y.toInt() - 1] != 0) {
-                        println("This cell is occupied! Choose another one!")
-                        println("Enter the coordinates: ")
+        if (cells[xCoordinate + 3 * yCoordinate] != ' ') {
+            println("This cell is occupied! Choose another one!")
+            makeMove()
+            return
+        } else {
+            cells[xCoordinate + 3 * yCoordinate] = next
+            next = if ( next == 'X') 'O' else 'X'
+            if (!checkWinner()) makeMove()
+        }
 
-                    } else {
-                        arr2d[x.toInt() - 1][y.toInt() - 1] = -1
-                        playerX = true
-                        showBoard()
-                    }
-                }
-            } catch (e: NumberFormatException) {
-                print("You should enter numbers!")
-            } catch (e: IndexOutOfBoundsException) {
-                print("Coordinates should be from 1 to 3!")
+    }
+
+    private fun checkWinner(): Boolean {
+
+        val winCoordinate = arrayOf(
+                intArrayOf(0, 1, 2),
+                intArrayOf(3, 4, 5),
+                intArrayOf(6, 7, 8),
+                intArrayOf(0, 3, 6),
+                intArrayOf(1, 4, 7),
+                intArrayOf(2, 5, 8),
+                intArrayOf(0, 4, 8),
+                intArrayOf(2, 4, 6))
+
+        for (elem in winCoordinate) {
+            if (cells[elem[0]] == cells[elem[1]] && cells[elem[0]] == cells[elem[2]] && cells[elem[0]] != ' ') {
+                countWin += 1
+                winString = cells[elem[0]].toString()
             }
-
-            val win = checkWin()
-            if (win != 0) return if (win == 1) "O wins" else "X wins"
-            val arr1d = arr2d.reduce { acc, ints -> acc + ints }
-            if (!arr1d.contains(0))
-                check = false
         }
-        return "Draw"
+
+        if (countWin == 1) {
+            printTable()
+            println("$winString wins")
+            return true
+        } else if (countWin == 0 && !cells.contains(' ')) {
+            printTable()
+            println("Draw")
+            return true
+        }
+        printTable()
+        return false
     }
 
-    fun checkWin(): Int {
-        for (i in 0..2) {
-            if (arr2d[i][0] == arr2d[i][1] && arr2d[i][0] == arr2d[i][2]) return arr2d[i][0]
-            if (arr2d[0][i] == arr2d[1][i] && arr2d[0][i] == arr2d[2][i]) return arr2d[0][i]
-        }
-        if (arr2d[0][0] == arr2d[1][1] && arr2d[0][0] == arr2d[2][2]) return arr2d[0][0]
-        if (arr2d[0][2] == arr2d[1][1] && arr2d[0][2] == arr2d[2][0]) return arr2d[0][2]
 
-        return 0
-    }
-
-    fun showBoard() {
-        val t = "X O"
-        println("---------")
-        for (i in 0..2) {
-            print("| ")
-            for (j in 0..2) {
-                print("${t[arr2d[i][j] + 1]} ")
-            }
-            println("|")
-        }
-        println("---------")
-    }
-
-    fun printEmptyField() {
+    private fun printTable() {
         val field = """
             ---------
-            |       |
-            |       |
-            |       |
+            | ${cells[0]} ${cells[1]} ${cells[2]} |
+            | ${cells[3]} ${cells[4]} ${cells[5]} |
+            | ${cells[6]} ${cells[7]} ${cells[8]} |
             ---------
         """.trimIndent()
         println(field)
     }
+}
+
+fun main() {
+    Game.init()
 }
